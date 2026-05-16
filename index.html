@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Structure decoding - 移动端触控支持</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Structure decoding - STAR结构匹配(移动端触控支持)</title>
     <style>
         :root {
             --wang-color: #e0f7fa;
@@ -14,39 +14,36 @@
 
         * {
             box-sizing: border-box;
-            /* 移动端避免长按菜单干扰拖拽 */
             -webkit-tap-highlight-color: transparent;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 16px;
             background-color: #f4f7f6;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            height: 100vh;
-            overflow: hidden; /* 防止整个页面滚动条，但内部列可滚动 */
-            touch-action: pan-y; /* 正常垂直滚动，拖拽时临时禁用 */
         }
 
         header {
             text-align: center;
-            margin-bottom: 15px;
-            flex-shrink: 0;
+            margin-bottom: 20px;
+            width: 100%;
         }
 
         h1 {
             color: #2c3e50;
             margin-bottom: 5px;
             margin-top: 0;
-            font-size: 1.6rem;
+            font-size: 1.8rem;
         }
 
         p.instruction {
             color: #34495e;
-            font-size: 1em;
+            font-size: 1rem;
             font-weight: bold;
             margin: 0;
         }
@@ -55,11 +52,12 @@
             display: flex;
             width: 100%;
             max-width: 1400px;
-            flex: 1;
             gap: 20px;
-            min-height: 0;
+            flex-wrap: wrap;          /* 移动端可换行，保证不溢出 */
+            justify-content: center;
         }
 
+        /* 三列默认在桌面端横向，移动端自动换为纵向 */
         .column {
             display: flex;
             flex-direction: column;
@@ -67,18 +65,24 @@
             border-radius: 10px;
             padding: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-width: 260px;
         }
 
         .col-side {
             flex: 1;
+            min-width: 280px;
+            max-height: 70vh;        /* 限制最大高度，内部滚动 */
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
 
         .col-center {
             flex: 1.5;
+            min-width: 300px;
             background: #fafafa;
-            overflow-y: hidden;
+            max-height: 70vh;
+            overflow-y: auto;          /* 中间列也可以滚动，避免内容被截断 */
+            -webkit-overflow-scrolling: touch;
         }
 
         .column h3 {
@@ -88,9 +92,13 @@
             padding-bottom: 10px;
             margin-top: 0;
             flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            background: inherit;
+            z-index: 2;
         }
 
-        /* 初始卡片样式 (桌面+移动端共用) */
+        /* 卡片样式 */
         .card {
             border: 2px solid var(--border-color);
             border-radius: 8px;
@@ -101,8 +109,8 @@
             line-height: 1.4;
             transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
             user-select: none;
-            box-sizing: border-box;
-            touch-action: pan-y; /* 允许垂直滚动，但在拖拽时会动态禁用 */
+            background-color: #fff;
+            touch-action: pan-y;    /* 允许垂直滚动，拖拽启动后会临时禁用 */
         }
 
         .card:active {
@@ -124,12 +132,10 @@
             border: 3px dashed #ffb74d;
             border-radius: 10px;
             background-color: var(--zone-color);
-            margin-bottom: 10px;
-            padding: 10px;
+            margin-bottom: 16px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            flex: 1;
-            min-height: 0;
             transition: background-color 0.3s, border-color 0.2s;
         }
 
@@ -141,7 +147,7 @@
             margin: 0 0 8px 0;
             color: #d84315;
             text-align: center;
-            font-size: 1.3em;
+            font-size: 1.2rem;
             flex-shrink: 0;
         }
 
@@ -153,50 +159,50 @@
         .dropped-items {
             display: flex;
             gap: 10px;
-            flex: 1;
-            min-height: 0;
+            flex-wrap: wrap;          /* 小屏幕下两卡片可折行 */
+            min-height: 80px;
         }
 
         /* 拖入后的卡片样式 */
         .dropped-items .card {
             flex: 1;
+            min-width: 140px;
             margin-bottom: 0;
             cursor: default;
             padding: 8px;
             font-size: 0.75rem;
             line-height: 1.25;
-            height: 100%;
             overflow-y: auto;
-            animation: shrinkIn 0.3s ease-out;
+            max-height: 180px;
+            animation: shrinkIn 0.2s ease-out;
             border-width: 1px;
-            pointer-events: auto;
-            touch-action: auto; /* 已经放置的卡片不参与拖拽，但保留滚动能力 */
         }
 
         .dropped-items .card::-webkit-scrollbar {
-            width: 5px;
+            width: 4px;
         }
         .dropped-items .card::-webkit-scrollbar-thumb {
             background: #b0bec5;
-            border-radius: 5px;
+            border-radius: 4px;
         }
 
         @keyframes shrinkIn {
-            0% { transform: scale(1.05); opacity: 0.8; }
+            0% { transform: scale(1.02); opacity: 0.8; }
             100% { transform: scale(1); opacity: 1; }
         }
 
         .btn-reveal {
-            margin-top: 15px;
+            margin-top: 20px;
+            margin-bottom: 10px;
             padding: 12px 30px;
-            font-size: 1.2em;
+            font-size: 1.2rem;
             font-weight: bold;
             color: white;
             background-color: #e74c3c;
             border: none;
-            border-radius: 25px;
+            border-radius: 40px;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             transition: background 0.3s, transform 0.1s;
             flex-shrink: 0;
         }
@@ -204,568 +210,526 @@
         .btn-reveal:hover {
             background-color: #c0392b;
         }
-
         .btn-reveal:active {
-            transform: scale(0.95);
+            transform: scale(0.96);
         }
 
         .highlight-star {
             color: #e74c3c;
-            font-size: 1.5em;
+            font-size: 1.4em;
             font-weight: 900;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-            text-decoration: underline;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            display: inline-block;
         }
 
-        /* 错误震动动画 */
+        /* 错误抖动 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
-
         .shake {
-            animation: shake 0.4s;
+            animation: shake 0.3s ease;
             border-color: #e74c3c !important;
             background-color: #fadbd8 !important;
         }
 
-        /* 移动端拖拽克隆元素样式 */
+        /* 移动端拖拽克隆样式 */
         .drag-clone {
             position: fixed;
             z-index: 9999;
-            opacity: 0.85;
-            transform: scale(1.02);
-            box-shadow: 0 12px 20px rgba(0,0,0,0.3);
+            opacity: 0.9;
+            transform: scale(1.02) rotate(1deg);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
             pointer-events: none;
-            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
             transition: none;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
             width: auto;
             max-width: 85vw;
-            backdrop-filter: blur(2px);
         }
 
-        /* 移动端优化：卡片不可拖拽时禁用触控拖拽效果 */
+        /* 已放置卡片不可拖拽 */
         .card[draggable="false"], .card.dropped-fixed {
             cursor: default;
             touch-action: auto;
+            opacity: 1 !important;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 850px) {
             .game-container {
-                gap: 12px;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .col-side, .col-center {
+                max-height: 55vh;
+                width: 100%;
             }
             .column {
-                padding: 10px;
+                width: 100%;
             }
             .card {
                 font-size: 0.85rem;
-                padding: 10px;
             }
             .drop-zone h2 {
-                font-size: 1.1rem;
+                font-size: 1rem;
             }
             .btn-reveal {
-                padding: 10px 20px;
                 font-size: 1rem;
+                padding: 10px 24px;
             }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Structure decoding</h1>
-        <p class="instruction">Match the paragraphs with the corresponding topic.</p>
-    </header>
+<header>
+    <h1>📖 Structure decoding</h1>
+    <p class="instruction">✨ 将段落卡片拖拽到对应的 STAR 结构区域（Situation / Task / Action / Result）✨</p>
+</header>
 
-    <div class="game-container">
-        <!-- Left Column: Wang Lu -->
-        <div class="column col-side" id="wang-col">
-            <h3>Wang Lu's Letter</h3>
-            
-            <div class="card wang" draggable="true" data-match="S">
-                <b>【Para.1】</b> After I attended your summer camp about health and lifestyle choices, I realised I hardly ever felt well, either physically or mentally. I often felt sleepy and dizzy, and lacked passion. Most worrying, though, I got the flu easily and experienced many toothaches, too.
-            </div>
-
-            <div class="card wang" draggable="true" data-match="T">
-                <b>【Para.2】</b> At the end of the camp I heard, “Change the world by changing yourself.” This stimulated my motivation. A dentist once examined me and told me that too much sugar in my meals had damaged my teeth and health. I made up my mind to change two things in my life: to eat nothing with sugar and to exercise regularly.
-            </div>
-
-            <div class="card wang" draggable="true" data-match="A">
-                <b>【Para.3】</b> After that I stopped buying all the sweets, biscuits, and sugary drinks... Whenever I went out with friends, I brought snacks from home: fruit, nuts, dried meat, etc. <br><br>
-                <b>【Para.4】</b> My exercise was very simple: I went outside every day for at least 30 minutes and did something active. Sometimes I played table tennis... Other times I jumped on my skateboard...
-            </div>
-
-            <div class="card wang" draggable="true" data-match="R">
-                <b>【Para.5】</b> The results have been fantastic. I feel more dynamic and stronger than ever... I no longer suffer from a flu virus or toothaches either. Best of all... I feel like I’m in control of my own life. I CAN change myself. I just need to try.<br><i>Yours truly, Wang Lu</i>
-            </div>
+<div class="game-container">
+    <!-- 左侧：王路信件 -->
+    <div class="column col-side" id="wang-col">
+        <h3>📩 Wang Lu's Letter</h3>
+        <div class="card wang" draggable="true" data-match="S">
+            <b>🔹 Para.1</b> After I attended your summer camp about health and lifestyle choices, I realised I hardly ever felt well, either physically or mentally. I often felt sleepy and dizzy, and lacked passion. Most worrying, though, I got the flu easily and experienced many toothaches, too.
         </div>
-
-        <!-- Center Column: Drop Zones -->
-        <div class="column col-center">
-            <h3>Text Structure</h3>
-            
-            <div class="drop-zone" data-type="S">
-                <h2 class="zone-title"><span class="first-letter">S</span>ituation</h2>
-                <div class="dropped-items"></div>
-            </div>
-
-            <div class="drop-zone" data-type="T">
-                <h2 class="zone-title"><span class="first-letter">T</span>ask</h2>
-                <div class="dropped-items"></div>
-            </div>
-
-            <div class="drop-zone" data-type="A">
-                <h2 class="zone-title"><span class="first-letter">A</span>ction</h2>
-                <div class="dropped-items"></div>
-            </div>
-
-            <div class="drop-zone" data-type="R">
-                <h2 class="zone-title"><span class="first-letter">R</span>esult</h2>
-                <div class="dropped-items"></div>
-            </div>
+        <div class="card wang" draggable="true" data-match="T">
+            <b>🔹 Para.2</b> At the end of the camp I heard, “Change the world by changing yourself.” This stimulated my motivation. A dentist once examined me and told me that too much sugar in my meals had damaged my teeth and health. I made up my mind to change two things in my life: to eat nothing with sugar and to exercise regularly.
         </div>
-
-        <!-- Right Column: George Fielding -->
-        <div class="column col-side" id="george-col">
-            <h3>George Fielding's Letter</h3>
-
-            <div class="card george" draggable="true" data-match="S">
-                <b>【Para.1 & 2】</b> As I took part in the summer camp... I started to analyse my choices... After starting high school, I felt stressed out and always relaxed by playing computer games. I got so absorbed that I played the games day and night. Playing was fun, but I felt even more worn out afterwards!
-            </div>
-
-            <div class="card george" draggable="true" data-match="T">
-                <b>【Para.2】</b> So after the camp, I realised that it was very, very important to adjust my lifestyle. I decided to take control of my life and find other ways to relax.
-            </div>
-
-            <div class="card george" draggable="true" data-match="A">
-                <b>【Para.3】</b> It was a big struggle not to join my friends in playing online games... However, I realised that to succeed in quitting, I had to replace it with something else. Rock climbing, bowling, watching comedies, and playing basketball were the things I thought of doing instead.
-            </div>
-
-            <div class="card george" draggable="true" data-match="R">
-                <b>【Para.4 & 5】</b> Now my dad and I go rock climbing together monthly! It has enhanced the quality of my life, improving my health and increasing my happiness... After six months of trying out new ways of relaxing, I feel much more energetic. I feel that I can change myself for the better...<br><i>Sincerely, George Fielding</i>
-            </div>
+        <div class="card wang" draggable="true" data-match="A">
+            <b>🔹 Para.3-4</b> After that I stopped buying all the sweets, biscuits, and sugary drinks... Whenever I went out with friends, I brought snacks from home: fruit, nuts, dried meat, etc.<br><br>
+            My exercise was very simple: I went outside every day for at least 30 minutes and did something active. Sometimes I played table tennis... Other times I jumped on my skateboard...
+        </div>
+        <div class="card wang" draggable="true" data-match="R">
+            <b>🔹 Para.5</b> The results have been fantastic. I feel more dynamic and stronger than ever... I no longer suffer from a flu virus or toothaches either. Best of all... I feel like I’m in control of my own life. I CAN change myself.<br><i>Yours truly, Wang Lu</i>
         </div>
     </div>
 
-    <button class="btn-reveal" id="revealBtn">Reveal the Secret Structure!</button>
+    <!-- 中间：STAR放置区（可滚动） -->
+    <div class="column col-center">
+        <h3>⭐ STAR Structure ⭐</h3>
+        <div class="drop-zone" data-type="S">
+            <h2><span class="first-letter">S</span>ituation 现状</h2>
+            <div class="dropped-items"></div>
+        </div>
+        <div class="drop-zone" data-type="T">
+            <h2><span class="first-letter">T</span>ask 任务/决心</h2>
+            <div class="dropped-items"></div>
+        </div>
+        <div class="drop-zone" data-type="A">
+            <h2><span class="first-letter">A</span>ction 行动</h2>
+            <div class="dropped-items"></div>
+        </div>
+        <div class="drop-zone" data-type="R">
+            <h2><span class="first-letter">R</span>esult 结果</h2>
+            <div class="dropped-items"></div>
+        </div>
+    </div>
 
-    <script>
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
+    <!-- 右侧：乔治信件 -->
+    <div class="column col-side" id="george-col">
+        <h3>📩 George Fielding's Letter</h3>
+        <div class="card george" draggable="true" data-match="S">
+            <b>🔸 Para.1-2</b> As I took part in the summer camp... I started to analyse my choices... After starting high school, I felt stressed out and always relaxed by playing computer games. I got so absorbed that I played the games day and night. Playing was fun, but I felt even more worn out afterwards!
+        </div>
+        <div class="card george" draggable="true" data-match="T">
+            <b>🔸 Para.2后半</b> So after the camp, I realised that it was very, very important to adjust my lifestyle. I decided to take control of my life and find other ways to relax.
+        </div>
+        <div class="card george" draggable="true" data-match="A">
+            <b>🔸 Para.3</b> It was a big struggle not to join my friends in playing online games... However, I realised that to succeed in quitting, I had to replace it with something else. Rock climbing, bowling, watching comedies, and playing basketball were the things I thought of doing instead.
+        </div>
+        <div class="card george" draggable="true" data-match="R">
+            <b>🔸 Para.4-5</b> Now my dad and I go rock climbing together monthly! It has enhanced the quality of my life, improving my health and increasing my happiness... After six months of trying out new ways of relaxing, I feel much more energetic. I feel that I can change myself for the better...<br><i>Sincerely, George Fielding</i>
+        </div>
+    </div>
+</div>
 
-        function playSuccessSound() {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+<button class="btn-reveal" id="revealBtn">✨ 揭晓结构秘密 ✨</button>
+
+<script>
+    // ======================= 音效模块 =======================
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        return audioCtx;
+    }
+
+    function playSuccessSound() {
+        try {
+            const ctx = initAudio();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
             osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            gain.connect(ctx.destination);
             osc.type = 'sine';
-            const now = audioCtx.currentTime;
+            const now = ctx.currentTime;
             osc.frequency.setValueAtTime(523.25, now);
             osc.frequency.setValueAtTime(659.25, now + 0.1);
             osc.frequency.setValueAtTime(783.99, now + 0.2);
-            osc.frequency.setValueAtTime(1046.50, now + 0.3);
-            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.setValueAtTime(0.15, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
             osc.start(now);
             osc.stop(now + 0.5);
-        }
+        } catch(e) { console.warn(e); }
+    }
 
-        function playFailSound() {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+    function playFailSound() {
+        try {
+            const ctx = initAudio();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
             osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            gain.connect(ctx.destination);
             osc.type = 'sawtooth';
-            const now = audioCtx.currentTime;
-            osc.frequency.setValueAtTime(150, now);
-            osc.frequency.exponentialRampToValueAtTime(80, now + 0.3);
-            gain.gain.setValueAtTime(0.2, now);
+            const now = ctx.currentTime;
+            osc.frequency.setValueAtTime(160, now);
+            osc.frequency.exponentialRampToValueAtTime(90, now + 0.3);
+            gain.gain.setValueAtTime(0.12, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
             osc.start(now);
             osc.stop(now + 0.3);
-        }
+        } catch(e) {}
+    }
 
-        // ---------- 桌面端 Drag & Drop (保持不变) ----------
-        let draggedCard = null;
-        const cards = document.querySelectorAll('.card');
-        const dropZones = document.querySelectorAll('.drop-zone');
+    // ======================= 桌面端 Drag & Drop =======================
+    let draggedCard = null;
+    const allCards = document.querySelectorAll('.card');
+    const dropZones = document.querySelectorAll('.drop-zone');
 
-        cards.forEach(card => {
-            card.addEventListener('dragstart', function(e) {
-                draggedCard = this;
-                setTimeout(() => this.style.opacity = '0.4', 0);
-            });
-
-            card.addEventListener('dragend', function() {
-                setTimeout(() => {
-                    this.style.opacity = '1';
-                    draggedCard = null;
-                }, 0);
-            });
-        });
-
-        dropZones.forEach(zone => {
-            zone.addEventListener('dragover', function(e) {
-                e.preventDefault(); 
-                this.classList.add('drag-over');
-            });
-
-            zone.addEventListener('dragleave', function() {
-                this.classList.remove('drag-over');
-            });
-
-            zone.addEventListener('drop', function(e) {
+    // 桌面拖拽
+    allCards.forEach(card => {
+        card.addEventListener('dragstart', (e) => {
+            // 已经固定的卡片不能拖拽
+            if (card.getAttribute('draggable') === 'false') {
                 e.preventDefault();
-                this.classList.remove('drag-over');
-
-                if (draggedCard) {
-                    const expectedMatch = draggedCard.getAttribute('data-match');
-                    const zoneType = this.getAttribute('data-type');
-
-                    if (expectedMatch === zoneType) {
-                        this.querySelector('.dropped-items').appendChild(draggedCard);
-                        draggedCard.setAttribute('draggable', 'false');
-                        draggedCard.style.opacity = '1';
-                        playSuccessSound();
-                    } else {
-                        playFailSound();
-                        draggedCard.classList.add('shake');
-                        if (navigator.vibrate) navigator.vibrate(200); 
-                        setTimeout(() => { draggedCard.classList.remove('shake'); }, 400);
-                    }
-                }
-            });
+                return false;
+            }
+            draggedCard = card;
+            e.dataTransfer.setData('text/plain', '');
+            card.style.opacity = '0.4';
         });
+        card.addEventListener('dragend', () => {
+            if (draggedCard) draggedCard.style.opacity = '1';
+            draggedCard = null;
+        });
+    });
 
-        // ---------- 移动端触控拖拽支持 (完整实现) ----------
-        let touchDragActive = false;
-        let touchDraggedCard = null;          // 原始卡片DOM
-        let cloneElement = null;               // 跟随手指的克隆
-        let startTouchX = 0, startTouchY = 0;
-        let cloneOffsetX = 0, cloneOffsetY = 0;
-        let currentHighlightZone = null;       // 当前高亮区域
-        let originalCardOpacity = '';
-        let originalTouchAction = '';
-        
-        // 检查卡片是否可以被拖拽 (未固定、未放置在dropzone内)
-        function isCardDraggable(card) {
-            if (!card) return false;
-            // 已禁用draggable 或者 父级是 .dropped-items 说明已经被投放
-            if (card.getAttribute('draggable') === 'false') return false;
-            if (card.closest('.dropped-items')) return false;
-            return true;
-        }
-        
-        // 创建克隆元素 (完全复制视觉样式)
-        function createCloneElement(originalCard, touchX, touchY) {
-            const rect = originalCard.getBoundingClientRect();
-            const clone = originalCard.cloneNode(true);
-            clone.classList.add('drag-clone');
-            clone.style.position = 'fixed';
-            clone.style.left = rect.left + 'px';
-            clone.style.top = rect.top + 'px';
-            clone.style.width = rect.width + 'px';
-            clone.style.height = rect.height + 'px';
-            clone.style.margin = '0';
-            clone.style.pointerEvents = 'none';
-            clone.style.opacity = '0.92';
-            clone.style.zIndex = '10000';
-            // 移除原有拖拽属性
-            clone.setAttribute('draggable', 'false');
-            document.body.appendChild(clone);
-            
-            // 计算手指相对于克隆左上角的偏移
-            const offsetX = touchX - rect.left;
-            const offsetY = touchY - rect.top;
-            return { clone, offsetX, offsetY };
-        }
-        
-        // 更新克隆位置
-        function updateClonePosition(clientX, clientY) {
-            if (!cloneElement) return;
-            let newLeft = clientX - cloneOffsetX;
-            let newTop = clientY - cloneOffsetY;
-            cloneElement.style.left = newLeft + 'px';
-            cloneElement.style.top = newTop + 'px';
-        }
-        
-        // 清除所有高亮
-        function clearDragOverHighlight() {
-            dropZones.forEach(zone => {
-                zone.classList.remove('drag-over');
-            });
-            currentHighlightZone = null;
-        }
-        
-        // 根据坐标获取下方的放置区
-        function getDropZoneFromPoint(clientX, clientY) {
-            const elem = document.elementsFromPoint(clientX, clientY);
-            for (let el of elem) {
-                if (el.classList && el.classList.contains('drop-zone')) {
-                    return el;
-                }
+    dropZones.forEach(zone => {
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('drag-over');
+        });
+        zone.addEventListener('dragleave', () => {
+            zone.classList.remove('drag-over');
+        });
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+            if (!draggedCard) return;
+            const expected = draggedCard.getAttribute('data-match');
+            const zoneType = zone.getAttribute('data-type');
+            if (expected === zoneType) {
+                zone.querySelector('.dropped-items').appendChild(draggedCard);
+                draggedCard.setAttribute('draggable', 'false');
+                draggedCard.classList.add('dropped-fixed');
+                draggedCard.style.opacity = '1';
+                playSuccessSound();
+            } else {
+                playFailSound();
+                draggedCard.classList.add('shake');
+                if (navigator.vibrate) navigator.vibrate(100);
+                setTimeout(() => draggedCard.classList.remove('shake'), 400);
             }
-            return null;
+            draggedCard = null;
+        });
+    });
+
+    // ======================= 移动端智能触控拖拽 (不干扰垂直滚动) =======================
+    let touchState = {
+        active: false,
+        card: null,
+        clone: null,
+        startX: 0, startY: 0,
+        offsetX: 0, offsetY: 0,
+        isDragging: false,      // 是否已进入拖拽模式
+        moveThreshold: 8,       // 移动阈值
+        startTime: 0,
+        currentHighlightZone: null
+    };
+
+    function clearTouchHighlight() {
+        if (touchState.currentHighlightZone) {
+            touchState.currentHighlightZone.classList.remove('drag-over');
+            touchState.currentHighlightZone = null;
         }
-        
-        // 高亮对应的放置区
-        function highlightDropZone(zone) {
-            if (currentHighlightZone === zone) return;
-            clearDragOverHighlight();
-            if (zone) {
-                zone.classList.add('drag-over');
-                currentHighlightZone = zone;
+    }
+
+    function getDropZoneFromPoint(clientX, clientY) {
+        const elements = document.elementsFromPoint(clientX, clientY);
+        for (let el of elements) {
+            if (el.classList && el.classList.contains('drop-zone')) {
+                return el;
             }
         }
-        
-        // 移动端完成放置 (在touchend时调用)
-        function finishTouchDrop(targetZone, clientX, clientY) {
-            if (!touchDragActive || !touchDraggedCard) {
-                cleanUpTouchDrag();
-                return;
+        return null;
+    }
+
+    function updateClonePosition(clientX, clientY) {
+        if (!touchState.clone) return;
+        let left = clientX - touchState.offsetX;
+        let top = clientY - touchState.offsetY;
+        touchState.clone.style.left = left + 'px';
+        touchState.clone.style.top = top + 'px';
+        // 实时高亮下方区域
+        const zoneUnder = getDropZoneFromPoint(clientX, clientY);
+        if (zoneUnder !== touchState.currentHighlightZone) {
+            clearTouchHighlight();
+            if (zoneUnder) {
+                zoneUnder.classList.add('drag-over');
+                touchState.currentHighlightZone = zoneUnder;
             }
-            
-            // 如果存在目标区域并且匹配正确
+        }
+    }
+
+    function createClone(card, touchX, touchY) {
+        const rect = card.getBoundingClientRect();
+        const clone = card.cloneNode(true);
+        clone.classList.add('drag-clone');
+        clone.style.position = 'fixed';
+        clone.style.left = rect.left + 'px';
+        clone.style.top = rect.top + 'px';
+        clone.style.width = rect.width + 'px';
+        clone.style.margin = '0';
+        clone.style.pointerEvents = 'none';
+        clone.setAttribute('draggable', 'false');
+        document.body.appendChild(clone);
+        const offsetX = touchX - rect.left;
+        const offsetY = touchY - rect.top;
+        return { clone, offsetX, offsetY };
+    }
+
+    function finishTouchDrag(targetZone) {
+        if (!touchState.active || !touchState.card) {
+            cleanTouchDrag();
+            return;
+        }
+        const card = touchState.card;
+        const expected = card.getAttribute('data-match');
+        let isValid = false;
+        if (targetZone) {
+            const zoneType = targetZone.getAttribute('data-type');
+            isValid = (expected === zoneType);
+        }
+        if (isValid && targetZone) {
+            const dropContainer = targetZone.querySelector('.dropped-items');
+            if (dropContainer) {
+                // 移动卡片
+                dropContainer.appendChild(card);
+                card.setAttribute('draggable', 'false');
+                card.classList.add('dropped-fixed');
+                card.style.opacity = '1';
+                card.style.touchAction = '';
+                playSuccessSound();
+            } else {
+                // 异常: 放回原位
+                restoreCardOriginalPosition(card);
+                playFailSound();
+                triggerShake(card);
+            }
+        } else {
+            // 无效区域 或 类型错误
+            restoreCardOriginalPosition(card);
             if (targetZone) {
-                const expectedMatch = touchDraggedCard.getAttribute('data-match');
-                const zoneType = targetZone.getAttribute('data-type');
-                
-                if (expectedMatch === zoneType) {
-                    // 正确匹配: 移动原始卡片到目标区
-                    const droppedContainer = targetZone.querySelector('.dropped-items');
-                    if (droppedContainer) {
-                        // 从原父节点移除
-                        const originalParent = touchDraggedCard.parentNode;
-                        droppedContainer.appendChild(touchDraggedCard);
-                        // 更新卡片属性，使其不可再拖拽 (桌面/移动均禁用)
-                        touchDraggedCard.setAttribute('draggable', 'false');
-                        touchDraggedCard.style.opacity = '1';
-                        // 移除可能残留的内联样式
-                        touchDraggedCard.style.touchAction = '';
-                        // 添加固定标志class
-                        touchDraggedCard.classList.add('dropped-fixed');
-                        // 播放成功音效
-                        playSuccessSound();
-                    } else {
-                        // 异常情况
-                        restoreOriginalCardAppearance();
-                        playFailSound();
-                        triggerShakeAnimation(touchDraggedCard);
-                    }
-                } else {
-                    // 错误匹配: 震动 + 失败音效
-                    playFailSound();
-                    triggerShakeAnimation(touchDraggedCard);
-                    restoreOriginalCardAppearance();
-                    if (navigator.vibrate) navigator.vibrate(200);
-                }
+                // 匹配错误播放失败音效
+                playFailSound();
+                triggerShake(card);
+                if (navigator.vibrate) navigator.vibrate(100);
             } else {
-                // 放置区无效，不做移动，恢复原状
-                restoreOriginalCardAppearance();
-                // 轻反馈（可选震动10ms表示无效）
-                if (navigator.vibrate) navigator.vibrate(50);
-            }
-            
-            cleanUpTouchDrag();
-        }
-        
-        // 恢复原始卡片外观（透明度等）
-        function restoreOriginalCardAppearance() {
-            if (touchDraggedCard) {
-                touchDraggedCard.style.opacity = '1';
-                touchDraggedCard.style.touchAction = '';
+                // 放到空白区域，无提示但恢复
             }
         }
-        
-        // 触发抖动动画
-        function triggerShakeAnimation(card) {
-            if (!card) return;
-            card.classList.add('shake');
-            setTimeout(() => {
-                if (card) card.classList.remove('shake');
-            }, 400);
+        cleanTouchDrag();
+    }
+
+    function restoreCardOriginalPosition(card) {
+        // 由于我们没有保存原始父节点，卡片没有被移动就不需要恢复。但是拖拽过程中并没有移动原卡片，所以无需额外处理。
+        // 只需重置样式
+        if (card) {
+            card.style.opacity = '1';
+            card.style.touchAction = '';
         }
-        
-        // 完全清理拖拽状态
-        function cleanUpTouchDrag() {
-            if (cloneElement && cloneElement.parentNode) {
-                cloneElement.parentNode.removeChild(cloneElement);
-            }
-            cloneElement = null;
-            if (touchDraggedCard) {
-                // 确保原始卡片透明度恢复（如果还未被移动）
-                touchDraggedCard.style.opacity = '1';
-                touchDraggedCard.style.touchAction = '';
-            }
-            touchDraggedCard = null;
-            touchDragActive = false;
-            clearDragOverHighlight();
-            // 恢复页面的默认touch-action，允许滚动
-            if (originalTouchAction) {
-                document.body.style.touchAction = originalTouchAction;
+    }
+
+    function triggerShake(card) {
+        if (!card) return;
+        card.classList.add('shake');
+        setTimeout(() => card.classList.remove('shake'), 350);
+    }
+
+    function cleanTouchDrag() {
+        if (touchState.clone && touchState.clone.parentNode) {
+            touchState.clone.parentNode.removeChild(touchState.clone);
+        }
+        if (touchState.card) {
+            touchState.card.style.opacity = '1';
+            touchState.card.style.touchAction = '';
+        }
+        // 恢复body滚动
+        document.body.style.touchAction = '';
+        clearTouchHighlight();
+        touchState.active = false;
+        touchState.card = null;
+        touchState.clone = null;
+        touchState.isDragging = false;
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+        document.removeEventListener('touchcancel', onTouchCancel);
+    }
+
+    function onTouchMove(e) {
+        if (!touchState.active) return;
+        const touch = e.touches[0];
+        if (!touch) return;
+        const deltaX = Math.abs(touch.clientX - touchState.startX);
+        const deltaY = Math.abs(touch.clientY - touchState.startY);
+        // 未进入拖拽模式且未超过阈值 -> 不阻止滚动
+        if (!touchState.isDragging && (deltaX < touchState.moveThreshold && deltaY < touchState.moveThreshold)) {
+            return;
+        }
+        // 超过阈值但还没进入拖拽模式，决定是否启动拖拽 (优先水平方向)
+        if (!touchState.isDragging) {
+            // 水平移动大于垂直移动且水平超过阈值，启动拖拽；否则让页面滚动（不启动拖拽，终止当前拖拽流程）
+            if (deltaX > deltaY && deltaX >= touchState.moveThreshold) {
+                // 启动拖拽模式
+                touchState.isDragging = true;
+                // 阻止页面滚动
+                e.preventDefault();
+                // 隐藏原卡片半透明
+                touchState.card.style.opacity = '0.3';
+                // 创建克隆体
+                const { clone, offsetX, offsetY } = createClone(touchState.card, touch.clientX, touch.clientY);
+                touchState.clone = clone;
+                touchState.offsetX = offsetX;
+                touchState.offsetY = offsetY;
+                document.body.style.touchAction = 'none';
+            } else if (deltaY > deltaX && deltaY >= touchState.moveThreshold) {
+                // 垂直滑动意图明显，取消拖拽，让页面正常滚动
+                cleanTouchDrag();
+                return;
             } else {
-                document.body.style.touchAction = '';
-            }
-            // 移除全局事件
-            document.removeEventListener('touchmove', onGlobalTouchMove);
-            document.removeEventListener('touchend', onGlobalTouchEnd);
-            document.removeEventListener('touchcancel', onGlobalTouchCancel);
-        }
-        
-        // touchmove 全局处理器
-        function onGlobalTouchMove(e) {
-            if (!touchDragActive) return;
-            e.preventDefault();      // 拖拽时阻止页面滚动
-            const touch = e.touches[0];
-            if (!touch) return;
-            updateClonePosition(touch.clientX, touch.clientY);
-            // 实时检测手指下方的dropzone并高亮
-            const targetZone = getDropZoneFromPoint(touch.clientX, touch.clientY);
-            highlightDropZone(targetZone);
-        }
-        
-        function onGlobalTouchEnd(e) {
-            if (!touchDragActive) {
-                cleanUpTouchDrag();
                 return;
             }
+        }
+        // 已经在拖拽模式中
+        if (touchState.isDragging) {
             e.preventDefault();
-            let finalZone = currentHighlightZone;
-            // 如果没有高亮区域，再根据最后一次触摸点获取一次
-            if (!finalZone && e.changedTouches.length > 0) {
-                const lastTouch = e.changedTouches[0];
-                finalZone = getDropZoneFromPoint(lastTouch.clientX, lastTouch.clientY);
-            }
-            finishTouchDrop(finalZone);
+            updateClonePosition(touch.clientX, touch.clientY);
         }
-        
-        function onGlobalTouchCancel(e) {
-            if (touchDragActive) {
-                restoreOriginalCardAppearance();
-                cleanUpTouchDrag();
-            }
+    }
+
+    function onTouchEnd(e) {
+        if (!touchState.active) {
+            cleanTouchDrag();
+            return;
         }
-        
-        // 触摸开始：只有满足条件才启动移动端拖拽
-        function onTouchStartHandler(e) {
-            // 如果已经有拖拽任务，禁止再启动新拖拽
-            if (touchDragActive) return;
-            
-            const touch = e.touches[0];
-            if (!touch) return;
-            
-            // 获取触摸点下的原始卡片元素（必须是.card且不在 dropped-items 中）
-            let targetCard = e.target.closest('.card');
-            if (!targetCard) return;
-            if (!isCardDraggable(targetCard)) return;
-            
-            // 启动移动端拖拽，阻止默认滚动/选中
-            e.preventDefault();
-            touchDragActive = true;
-            touchDraggedCard = targetCard;
-            
-            // 保存原始卡片透明度，设置半透明效果
-            originalCardOpacity = touchDraggedCard.style.opacity;
-            touchDraggedCard.style.opacity = '0.4';
-            
-            // 禁用页面全局滚动（拖拽期间）
-            originalTouchAction = document.body.style.touchAction;
-            document.body.style.touchAction = 'none';
-            
-            // 创建克隆并记录偏移
-            const { clone, offsetX, offsetY } = createCloneElement(touchDraggedCard, touch.clientX, touch.clientY);
-            cloneElement = clone;
-            cloneOffsetX = offsetX;
-            cloneOffsetY = offsetY;
-            
-            startTouchX = touch.clientX;
-            startTouchY = touch.clientY;
-            
-            // 监听全局移动事件
-            document.addEventListener('touchmove', onGlobalTouchMove, { passive: false });
-            document.addEventListener('touchend', onGlobalTouchEnd);
-            document.addEventListener('touchcancel', onGlobalTouchCancel);
+        let targetZone = null;
+        if (touchState.isDragging && e.changedTouches.length > 0) {
+            const lastTouch = e.changedTouches[0];
+            targetZone = getDropZoneFromPoint(lastTouch.clientX, lastTouch.clientY);
+        } else {
+            // 未进入拖拽模式，直接结束，不做任何移动
+            cleanTouchDrag();
+            return;
         }
-        
-        // 给所有可拖拽的卡片（尚未固定）绑定触摸启动事件
-        function bindMobileTouchEvents() {
-            // 动态绑定，利用事件委托，因为卡片可能会移动到中央区域后被固定，但未固定的卡片都在左右列
-            const container = document.querySelector('.game-container');
-            if (!container) return;
-            container.addEventListener('touchstart', (e) => {
-                // 确保触摸目标是.card且不在已投放区域
-                const card = e.target.closest('.card');
-                if (card && isCardDraggable(card)) {
-                    // 预检查，在真正逻辑里onTouchStartHandler会再次校验
-                    onTouchStartHandler(e);
-                }
-            }, { passive: false });
+        finishTouchDrag(targetZone);
+    }
+
+    function onTouchCancel(e) {
+        cleanTouchDrag();
+    }
+
+    function onTouchStart(e) {
+        // 避免多点触控同时拖拽
+        if (touchState.active) return;
+        const card = e.target.closest('.card');
+        if (!card) return;
+        // 不可拖拽的卡片：已经放置在中间区域或draggable=false
+        if (card.getAttribute('draggable') === 'false' || card.closest('.dropped-items')) {
+            return;
         }
-        
-        // 监听新卡片被移动到中央区域后，确保移除了移动端的拖拽能力（通过draggable false禁用）
-        // 使用MutationObserver可选，但直接利用draggable标志和isCardDraggable足够了。
-        // 另外由于拖拽完成后已经setAttribute draggable false，并且类dropped-fixed，touchstart会拒绝。
-        
-        // 修复iOS下如果音频未初始化，首次触屏播放声音前需要用户交互。但音频播放前有用户拖拽操作，应该没问题。
-        // 预先激活AudioContext可在任何触摸时调用，但为避免警告，简单预热。
-        function preloadAudio() {
-            document.body.addEventListener('touchstart', function initAudio() {
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-            }, { once: true });
-        }
-        preloadAudio();
-        
-        // 初始化移动端拖拽绑定 (仅当设备支持触摸时)
-        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-            bindMobileTouchEvents();
-            // 对于动态添加的元素无影响，原始卡片都在，完美。
-            // 额外确保已有的drop-zone的高亮样式在触摸过程中也能维持。
-        }
-        
-        // Reveal 按钮效果 (保持原有)
-        document.getElementById('revealBtn').addEventListener('click', function() {
-            const firstLetters = document.querySelectorAll('.first-letter');
-            firstLetters.forEach(letter => {
-                letter.classList.add('highlight-star');
-            });
-            
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'triangle';
-            const now = audioCtx.currentTime;
-            osc.frequency.setValueAtTime(440, now);
-            osc.frequency.linearRampToValueAtTime(880, now + 0.5);
-            gain.gain.setValueAtTime(0.2, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 1);
-            osc.start(now);
-            osc.stop(now + 1);
-            
-            this.textContent = "It's the STAR structure!";
-            this.style.backgroundColor = "#27ae60";
+        const touch = e.touches[0];
+        if (!touch) return;
+        // 记录初始状态
+        touchState.active = true;
+        touchState.card = card;
+        touchState.startX = touch.clientX;
+        touchState.startY = touch.clientY;
+        touchState.startTime = Date.now();
+        touchState.isDragging = false;
+        touchState.clone = null;
+        // 不立即阻止滚动，等待move判断
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchend', onTouchEnd);
+        document.addEventListener('touchcancel', onTouchCancel);
+    }
+
+    // 绑定触摸开始（事件委托）
+    const gameContainer = document.querySelector('.game-container');
+    if (gameContainer) {
+        gameContainer.addEventListener('touchstart', onTouchStart, { passive: false });
+    }
+
+    // 预热音频（首次触摸时激活）
+    function warmupAudio() {
+        const activate = () => {
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            document.removeEventListener('touchstart', activate);
+            document.removeEventListener('click', activate);
+        };
+        document.addEventListener('touchstart', activate);
+        document.addEventListener('click', activate);
+    }
+    warmupAudio();
+
+    // ======================= 揭晓按钮 =======================
+    const revealBtn = document.getElementById('revealBtn');
+    revealBtn.addEventListener('click', () => {
+        const firstLetters = document.querySelectorAll('.first-letter');
+        firstLetters.forEach(letter => {
+            letter.classList.add('highlight-star');
         });
-        
-        // 额外样式修正：保证所有卡片在移动端如果已放置不可再次被拖拽 (双重保障)
-        const style = document.createElement('style');
-        style.textContent = `
-            .card[draggable="false"], .card.dropped-fixed {
-                touch-action: auto !important;
-                cursor: default;
-            }
-            .drag-clone {
-                transform: rotate(1deg);
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // 桌面端拖动和移动端完美共存，且如果移动端已经移动后, 桌面dragstart也不会再触发(draggable false)
-        console.log("移动端触控支持已激活 (Touch & Drag)");
-    </script>
+        try {
+            const ctx = initAudio();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'triangle';
+            const now = ctx.currentTime;
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.linearRampToValueAtTime(880, now + 0.4);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+            osc.start(now);
+            osc.stop(now + 0.8);
+        } catch(e) {}
+        revealBtn.textContent = "🎉 STAR 结构揭秘！ 🎉";
+        revealBtn.style.backgroundColor = "#27ae60";
+        setTimeout(() => {
+            revealBtn.textContent = "✨ 揭晓结构秘密 ✨";
+            revealBtn.style.backgroundColor = "#e74c3c";
+        }, 2000);
+    });
+
+    // 确保页面完全可滚动，并且所有内容自适应
+    console.log("✅ 移动端优化完成：页面可滚动 + 智能拖拽不干扰滑动");
+</script>
 </body>
 </html>
