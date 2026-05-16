@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Structure decoding - STAR结构匹配(移动端触控支持)</title>
+    <title>Structure decoding</title>
     <style>
         :root {
             --wang-color: #e0f7fa;
@@ -284,7 +284,7 @@
 
 <header>
     <h1>📖 Structure decoding</h1>
-    <p class="instruction">✨ 将段落卡片拖拽到对应的 STAR 结构区域（Situation / Task / Action / Result）✨</p>
+    <p class="instruction">Match the paragraphs with the corresponding topic.</p>
 </header>
 
 <div class="game-container">
@@ -308,21 +308,21 @@
 
     <!-- 中间：STAR放置区（可滚动） -->
     <div class="column col-center">
-        <h3>⭐ STAR Structure ⭐</h3>
+        <h3>STAR Structure</h3>
         <div class="drop-zone" data-type="S">
-            <h2><span class="first-letter">S</span>ituation 现状</h2>
+            <h2><span class="first-letter">S</span>ituation</h2>
             <div class="dropped-items"></div>
         </div>
         <div class="drop-zone" data-type="T">
-            <h2><span class="first-letter">T</span>ask 任务/决心</h2>
+            <h2><span class="first-letter">T</span>ask</h2>
             <div class="dropped-items"></div>
         </div>
         <div class="drop-zone" data-type="A">
-            <h2><span class="first-letter">A</span>ction 行动</h2>
+            <h2><span class="first-letter">A</span>ction</h2>
             <div class="dropped-items"></div>
         </div>
         <div class="drop-zone" data-type="R">
-            <h2><span class="first-letter">R</span>esult 结果</h2>
+            <h2><span class="first-letter">R</span>esult</h2>
             <div class="dropped-items"></div>
         </div>
     </div>
@@ -334,7 +334,7 @@
             <b>🔸 Para.1-2</b> As I took part in the summer camp... I started to analyse my choices... After starting high school, I felt stressed out and always relaxed by playing computer games. I got so absorbed that I played the games day and night. Playing was fun, but I felt even more worn out afterwards!
         </div>
         <div class="card george" draggable="true" data-match="T">
-            <b>🔸 Para.2后半</b> So after the camp, I realised that it was very, very important to adjust my lifestyle. I decided to take control of my life and find other ways to relax.
+            <b>🔸 Para.2</b> So after the camp, I realised that it was very, very important to adjust my lifestyle. I decided to take control of my life and find other ways to relax.
         </div>
         <div class="card george" draggable="true" data-match="A">
             <b>🔸 Para.3</b> It was a big struggle not to join my friends in playing online games... However, I realised that to succeed in quitting, I had to replace it with something else. Rock climbing, bowling, watching comedies, and playing basketball were the things I thought of doing instead.
@@ -720,10 +720,10 @@
             osc.start(now);
             osc.stop(now + 0.8);
         } catch(e) {}
-        revealBtn.textContent = "🎉 STAR 结构揭秘！ 🎉";
+        revealBtn.textContent = "It's the STAR structure!";
         revealBtn.style.backgroundColor = "#27ae60";
         setTimeout(() => {
-            revealBtn.textContent = "✨ 揭晓结构秘密 ✨";
+            revealBtn.textContent = "Reveal the Secret Structure!";
             revealBtn.style.backgroundColor = "#e74c3c";
         }, 2000);
     });
